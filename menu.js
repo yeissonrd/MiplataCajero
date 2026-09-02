@@ -98,15 +98,27 @@ function retirar() {
     if (usuarioActivo.saldo > 0) {
         let solicitudRetirar = Number(prompt("¿Cuánto desea retirar?"));
 
-        if (solicitudRetirar <= usuarioActivo.saldo) {
-            usuarioActivo.saldo = usuarioActivo.saldo - solicitudRetirar;
-            usuarioActivo.movimientos.push({ fecha: new Date().toLocaleString(), tipo: "Retiro",
-             valor: solicitudRetirar, saldo: usuarioActivo.saldo });
-            localStorage.setItem("usuarios", JSON.stringify(usuarios));
-            console.log(`Has retirado ${solicitudRetirar}. Tu nuevo saldo es ${usuarioActivo.saldo}`);
-        } else {
+        if (isNaN(solicitudRetirar) || solicitudRetirar <= 0) {
+            console.log("Ingrese un monto válido y mayor que cero");
+
+        } else if (solicitudRetirar > usuarioActivo.saldo) {
             console.log("Saldo insuficiente");
+
+        } else {
+            usuarioActivo.saldo = usuarioActivo.saldo - solicitudRetirar;
+
+            usuarioActivo.movimientos.push({
+                fecha: new Date().toLocaleString(),
+                tipo: "Retiro",
+                valor: solicitudRetirar,
+                saldo: usuarioActivo.saldo
+            });
+
+            localStorage.setItem("usuarios", JSON.stringify(usuarios));
+
+            console.log(`Has retirado ${solicitudRetirar}. Tu nuevo saldo es ${usuarioActivo.saldo}`);
         }
+
     } else {
         console.log("No tienes saldo disponible para retirar");
     }
