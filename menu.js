@@ -1,7 +1,8 @@
 let usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
 let usuarioActivo = null;
 
-let respuesta = Number(prompt("1. Iniciar Sección\n 2. Registrarse\n  "))
+let respuesta = Number(prompt(` --> Bienvenido a Mi Plata Ya <--
+    1. Iniciar Sección\n    2. Registrarse\n  `))
 
 switch (respuesta) {
     case 1: inicio(); break;
@@ -26,7 +27,7 @@ function registrase() {
     
 
     if (password === password2) {
-        const newUser = { id: id, user: user, email: email, password: password, saldo: 0, movimientos: [] };
+        const newUser = { id: id, user: user, email: email, password: password, saldo: 0, movimientos: [], bloqueado: false };
         usuarios.push(newUser);
         localStorage.setItem("usuarios", JSON.stringify(usuarios));
         console.log("Te has registrado exitosamente !");
@@ -41,6 +42,7 @@ function inicio() {
     let intentos = 0;
 
     let acceso = false;
+    let usuarioEncontrado = null
 
 
     while (intentos < 3) {
@@ -49,9 +51,15 @@ function inicio() {
 
 
         let user = prompt("Ingrese usuario");
-        let password = prompt("Ingrese clave");
 
-        let usuarioEncontrado = usuarios.find(usuario => usuario.user === user);
+        usuarioEncontrado = usuarios.find(usuario => usuario.user === user);
+
+        if (usuarioEncontrado && usuarioEncontrado.bloqueado) {
+            console.log("Esta cuenta está bloqueada por 24 horas, comunícate con tu banco");
+            return;
+        }
+
+        let password = prompt("Ingrese clave");
 
         if (usuarioEncontrado) {
 
@@ -80,14 +88,19 @@ function inicio() {
     if (acceso === false) {
 
         console.log("Cuenta bloqueada por 24 horas, comunicate con tu banco");
+        if (usuarioEncontrado) {
+            usuarioEncontrado.bloqueado = true;
+            localStorage.setItem("usuarios", JSON.stringify(usuarios));
+        }
 
     }
+
 }
 function menuTransacciones() {
     let continuar = true;
 
     while (continuar) {
-        let consultaMovimientos = Number(prompt("1. Retirar\n 2.Consultar Saldo\n  3. Consignar\n 4. Consultar Movimientos\n 5. Salir\n "));
+        let consultaMovimientos = Number(prompt("    1. Retirar\n    2.Consultar Saldo\n    3. Consignar\n    4. Consultar Movimientos\n    5. Salir\n "));
 
         switch (consultaMovimientos) {
             case 1: retirar(); break;
