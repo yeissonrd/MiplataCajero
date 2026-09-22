@@ -1,185 +1,272 @@
-let usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
-let usuarioActivo = null;
+let usuarios = [];
 
-let respuesta = Number(prompt(` --> Bienvenido a Mi Plata Ya <--
-    1. Iniciar Sección\n    2. Registrarse\n  `))
+const usuariosGuardados = localStorage.getItem("usuarios");
 
-switch (respuesta) {
-    case 1: inicio(); break;
-
-    case 2: registrase(); break;
-
-    default: console.log("Ingrese un valor valido");
+// Esta parta es para asegurarnos de que e
+if (usuariosGuardados !== null) {
+    usuarios = JSON.parse(usuariosGuardados); // Se convierte el texto guardado en un objeto / array con JSON.parse();
 }
 
-function registrase() {
-    let id = prompt(" Ingrese idetificación ")
-    let user = prompt("Ingrese usuario")
-    let usuarioExistente = usuarios.find(usuario => usuario.user === user);
-    if (usuarioExistente) {
-        console.log("Ese usuario ya existe, elige otro");
-        return;
-    }
-    let email = prompt("Ingrese correo ")
-    let password = prompt("Ingrese clave")
-    let password2 = prompt("Vuelva a ingresar la clave")
+// Pedir datos
+function registrar() {
+    let usuario = prompt("Inserte su nombre de usuario")
+    let identificacion = prompt("Inserte su identificacion")
+    let correo = prompt("Inserte correo electrónico")
+    let clave = prompt("Inserte una clave")
+    let repetirClave = prompt("Repita la misma clave")
 
+    while (clave !== repetirClave) {
+        console.log("Las claves no coinciden")
+        repetirClave = prompt("La claves no coinciden, repita nuevamente la clave")
+    }
+
+    let saldoInicial = Number(prompt("Ingrese su saldo inicial"))
+
+        while (isNaN(saldoInicial) || saldoInicial < 0) {
+        console.log("El saldo debe ser un número mayor o igual a 0")
+        saldoInicial = Number(prompt("Digite un valor mayor o igual a 0. Ingrese nuevamente su saldo inicial"))
+        }
+
+    let existe = false
+
+        for (let i = 0; i < usuarios.length; i++) {
+
+            if (usuarios[i].usuario === usuario || usuarios[i].identificacion === identificacion) {
+                existe = true
+            }
+        }  
     
+        if (existe) {
+            console.log("El usuario o la identificación ya existe")
+        } else {
+            let nuevoUsuario={
+            usuario: usuario,
+            identificacion: identificacion,
+            correo: correo,
+            clave: clave,
+            saldo: saldoInicial,
+            movimientos: [],
+            bloqueadoHasta: null
+            }
 
-    if (password === password2) {
-        const newUser = { id: id, user: user, email: email, password: password, saldo: 0, movimientos: [], bloqueado: false };
-        usuarios.push(newUser);
-        localStorage.setItem("usuarios", JSON.stringify(usuarios));
-        console.log("Te has registrado exitosamente !");
-    } else {
-        console.log("Contrasña no coinciden");
-    }
+        usuarios.push(nuevoUsuario)
+
+        localStorage.setItem("usuarios", JSON.stringify(usuarios))
+        }
+
 }
 
-
-function inicio() {
-
-    let intentos = 0;
-
-    let acceso = false;
+// Pedir datos para iniciar sesión
+function iniciar() {
+    let intentos = 0
+    let acceso = false
     let usuarioEncontrado = null
 
+    let usuario = prompt("Inserte su nombre de usuario")
 
-    while (intentos < 3) {
+    if (usuario === null) {
+        return
+    }
 
-        console.log(" intento " + (intentos + 1) + " de 3 ");
+    let existe = false
 
+    for (let i = 0; i < usuarios.length; i++) {
 
-        let user = prompt("Ingrese usuario");
+        if (usuarios[i].usuario === usuario) {
+            existe = true
+            usuarioEncontrado = usuarios[i]
+        }
+    }
 
-        usuarioEncontrado = usuarios.find(usuario => usuario.user === user);
+    if (existe) {
+        console.log("Usuario encontrado")
 
-        if (usuarioEncontrado && usuarioEncontrado.bloqueado) {
-            console.log("Esta cuenta está bloqueada por 24 horas, comunícate con tu banco");
-            return;
+        if (usuarioEncontrado.bloqueadoHasta !== null) {
+
+            let fechaActual = new Date()
+            let fechaBloqueo = new Date(usuarioEncontrado.bloqueadoHasta)
+
+            if (fechaActual < fechaBloqueo) {
+                console.log("Este usuario está bloqueado por 24 horas, comunicate con tu banco")
+                return
+            } else {
+                usuarioEncontrado.bloqueadoHasta = null
+                localStorage.setItem("usuarios", JSON.stringify(usuarios))
+            }
         }
 
-        let password = prompt("Ingrese clave");
+        while (intentos < 3 && acceso === false) {
 
-        if (usuarioEncontrado) {
+            let clave = prompt("Inserte clave de acceso")
 
-            if (usuarioEncontrado.password === password) {
+            if (clave === null) {
+                break
+            }
 
-                console.log("Inicio de sesion exitoso");
-                acceso = true;
-                usuarioActivo = usuarioEncontrado
-                menuTransacciones();
-                break;
+            if (usuarioEncontrado.clave === clave) {
+                console.log(`Bienvenido ${usuarioEncontrado.usuario}`)
+                acceso = true
 
+                transacciones(usuarioEncontrado)
+                break
 
             } else {
+                console.log("La contraseña no coincide")
+                intentos++
+                console.log(`Intento ${intentos} de 3`)
 
-                console.log("Contraseña incorrecta");
+                if (intentos === 3) {
+                    let fechaBloqueo = new Date()
+                    fechaBloqueo.setHours(fechaBloqueo.getHours() + 24)
+
+                    usuarioEncontrado.bloqueadoHasta = fechaBloqueo
+
+                    localStorage.setItem("usuarios", JSON.stringify(usuarios))
+
+                    console.log("Cuenta bloqueada por 24 horas, comunicate con tu banco")
+                }
             }
-        } else {
-
-            console.log("El usuario no existe");
         }
 
-        intentos++;
-
+    } else {
+        console.log("El usuario no existe")
     }
-
-    if (acceso === false) {
-
-        console.log("Cuenta bloqueada por 24 horas, comunicate con tu banco");
-        if (usuarioEncontrado) {
-            usuarioEncontrado.bloqueado = true;
-            localStorage.setItem("usuarios", JSON.stringify(usuarios));
-        }
-
-    }
-
 }
-function menuTransacciones() {
-    let continuar = true;
 
-    while (continuar) {
-        let consultaMovimientos = Number(prompt("    1. Retirar\n    2.Consultar Saldo\n    3. Consignar\n    4. Consultar Movimientos\n    5. Salir\n "));
 
-        switch (consultaMovimientos) {
-            case 1: retirar(); break;
-            case 2: saldo(); break;
-            case 3: consignar(); break;
-            case 4: movimientos(); break;
+function transacciones(usuario) {
+
+    let seleccion = 0
+
+    while (seleccion !== 5) {
+
+        seleccion = Number(prompt(`*** Seleccione una de las 5 opciones ***
+            1. Retirar
+            2. Consignar
+            3. Consultar Saldo
+            4. Consultar Movimientos
+            5. Salir`
+        ))
+
+        switch (seleccion) {
+
+            case 1:
+                let cantRetirar = Number(prompt("Ingrese la cantidad a retirar"))
+                
+                    while (isNaN(cantRetirar) || cantRetirar <= 0 || cantRetirar > usuario.saldo) {
+                        console.log("El valor a retirar debe ser mayor a 0 y no puede superar el saldo actual")
+                        cantRetirar = Number(prompt("Ingrese nuevamente la cantidad a retirar"))
+                    }
+
+                    const nuevoSaldoRetiro= ((usuario.saldo) - cantRetirar)
+                    usuario.saldo = nuevoSaldoRetiro
+                    
+
+                    let movimientoRetiro ={
+                        fecha: new Date(),
+                        concepto: "Retiro",
+                        monto: cantRetirar,
+                        saldo: usuario.saldo
+                    }
+                    
+                    usuario.movimientos.push(movimientoRetiro)
+
+                    localStorage.setItem("usuarios", JSON.stringify(usuarios))
+
+                    console.log(`Retiro exitoso. Su nuevo saldo es ${usuario.saldo}`)
+
+                break
+
+            case 2:
+                let cantConsignar = Number(prompt("Ingrese la cantidad a consignar"))
+                
+                    while (isNaN(cantConsignar) || cantConsignar <= 0) {
+                        console.log("El valor a consignar debe ser mayor a 0")
+                        cantConsignar = Number(prompt("Ingrese nuevamente la cantidad a consignar"))
+                    }
+
+                    const nuevoSaldoConsignado= ((usuario.saldo) + cantConsignar)
+                    usuario.saldo = nuevoSaldoConsignado
+                    
+                    let movimientoConsignar ={
+                        fecha: new Date(),
+                        concepto: "Consignar",
+                        monto: cantConsignar,
+                        saldo: usuario.saldo
+                    }
+                    
+                    usuario.movimientos.push(movimientoConsignar)
+
+                    localStorage.setItem("usuarios", JSON.stringify(usuarios))
+
+                    console.log(`Consignación exitosa. Su nuevo saldo es ${usuario.saldo}`)
+
+                break
+
+            case 3:
+                console.log(`Su saldo actual es de ${usuario.saldo}`)
+
+                    let movimientoConsulta ={
+                        fecha: new Date(),
+                        concepto: "Consulta",
+                        monto: 0,
+                        saldo: usuario.saldo
+                    }
+                    
+                    usuario.movimientos.push(movimientoConsulta)
+
+                    localStorage.setItem("usuarios", JSON.stringify(usuarios))
+
+                break
+            case 4:
+                console.log(`\n      ***     Sus movimientos:     ***
+                    `)
+
+                for (let i = 0; i < usuario.movimientos.length; i++) {
+                    console.log(`
+                        FECHA Y HORA --> ${new Date(usuario.movimientos[i].fecha).toLocaleString()}
+                        CONCEPTO ------> ${usuario.movimientos[i].concepto}
+                        VALOR ---------> ${usuario.movimientos[i].monto}
+                        SALDO ---------> ${usuario.movimientos[i].saldo}
+                    `)
+
+                }
+                break
+
             case 5:
-                console.log("Sesión finalizada. ¡Gracias por usar Mi Plata!");
-                continuar = false;
-                break;
-            default: console.log("Ingrese un valor valido");
+                console.log("Gracias por utilizar Mi Plata")
+                break
+
+            default:
+                console.log("Opción no válida")
         }
     }
 }
-function retirar() {
-    if (usuarioActivo.saldo > 0) {
-        let solicitudRetirar = Number(prompt("¿Cuánto desea retirar?"));
 
-        if (isNaN(solicitudRetirar) || solicitudRetirar <= 0) {
-            console.log("Ingrese un monto válido y mayor que cero");
+function menuInicio() {
 
-        } else if (solicitudRetirar > usuarioActivo.saldo) {
-            console.log("Saldo insuficiente");
+    let seleccion = 0
 
-        } else {
-            usuarioActivo.saldo = usuarioActivo.saldo - solicitudRetirar;
+    while (seleccion !== 3) {
+        
+        seleccion = Number(prompt(`--> Bienvenido a Mi Plata Ya <--
+Seleccione una de las 3 opciones\n1. Iniciar\n2. Registrar\n3. Salir`))
 
-            usuarioActivo.movimientos.push({
-                fecha: new Date().toLocaleString(),
-                tipo: "Retiro",
-                valor: solicitudRetirar,
-                saldo: usuarioActivo.saldo
-            });
+            switch (seleccion) {
+            case 1:
+                iniciar()
+                break
+            case 2:
+                registrar()
+                break
+            case 3:
+                console.log("Gracias por utilizar Mi Plata")
+                break
 
-            localStorage.setItem("usuarios", JSON.stringify(usuarios));
-
-            console.log(`Has retirado ${solicitudRetirar}. Tu nuevo saldo es ${usuarioActivo.saldo}`);
+            default:
+                console.log("Opción no valida")
         }
-
-    } else {
-        console.log("No tienes saldo disponible para retirar");
     }
 }
 
-function consignar() {
-    let solicitudConsignar = Number(prompt(" Ingrese valor a consignar "))
-    if (solicitudConsignar > 0) {
-        usuarioActivo.saldo = usuarioActivo.saldo + solicitudConsignar
-        usuarioActivo.movimientos.push({
-            fecha: new Date().toLocaleString(), tipo: "Consignación",
-            valor: solicitudConsignar, saldo: usuarioActivo.saldo
-        });
-        localStorage.setItem("usuarios", JSON.stringify(usuarios));
-        console.log(`Has consignado exitosamente ${solicitudConsignar}. Tu nuevo saldo es ${usuarioActivo.saldo}`);
-
-    } else {
-        console.log("Valor no valido");
-    }
-}
-
-function saldo() {
-    console.log(`Tu saldo actual es ${usuarioActivo.saldo}`);
-}
-
-function movimientos() {
-    if (usuarioActivo.movimientos.length === 0) {
-        console.log(" Aún no tiene movimientos ");
-        return;
-    }
-    console.log(` *** HISTORIAL DE MOVIMIENTOS ***`);
-    for (let i = 0; i < usuarioActivo.movimientos.length; i++) {
-        let registro = usuarioActivo.movimientos[i];
-        console.log(`
-         FECHA Y HORA --> ${registro.fecha}
-         CONCEPTO ------> ${registro.tipo}  
-         VALOR ---------> ${registro.valor}
-         SALDO ---------> ${registro.saldo}`);
-
-
-
-    }
-}
+menuInicio();
