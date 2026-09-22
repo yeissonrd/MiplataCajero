@@ -243,30 +243,3 @@ function transacciones(usuario) {
     }
 }
 
-function menuInicio() {
-
-    let seleccion = 0
-
-    while (seleccion !== 3) {
-        
-        seleccion = Number(prompt(`--> Bienvenido a Mi Plata Ya <--
-Seleccione una de las 3 opciones\n1. Iniciar\n2. Registrar\n3. Salir`))
-
-            switch (seleccion) {
-            case 1:
-                iniciar()
-                break
-            case 2:
-                registrar()
-                break
-            case 3:
-                console.log("Gracias por utilizar Mi Plata")
-                break
-
-            default:
-                console.log("Opción no valida")
-        }
-    }
-}
-
-menuInicio();
