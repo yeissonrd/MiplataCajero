@@ -2,7 +2,7 @@ let usuarios = [];
 
 const usuariosGuardados = localStorage.getItem("usuarios");
 
-// Esta parta es para asegurarnos de que e
+// Esta parta es para asegurarnos de que exiten usuarios guardados en el localStorage antes de intentar convertirlos a un objeto / array con JSON.parse();
 if (usuariosGuardados !== null) {
     usuarios = JSON.parse(usuariosGuardados); // Se convierte el texto guardado en un objeto / array con JSON.parse();
 }
